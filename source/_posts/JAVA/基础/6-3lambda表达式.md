@@ -2,6 +2,7 @@
 title: 6-3lambda表达式
 date: 2024-04-23 15:59:45
 tags:
+description:  函数式接口、JAVA提供的通用函数式接口
 ---
 
 ### 函数式接口
