@@ -7,7 +7,7 @@ description:
 
 1. {%post_link nginx/1_初识Nginx '初识Nginx' %}
     基本用法
-2. Nginx架构基础
+2. {%post_link nginx/2_Nginx架构基础 'Nginx架构基础' %}
     进程模型，数据结构
 3. 详解HTTP模块  
     学习如何处理Http请求，常用模块的指令，变量用法

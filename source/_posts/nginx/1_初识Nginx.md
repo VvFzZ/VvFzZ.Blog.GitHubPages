@@ -1,7 +1,7 @@
 ---
 title: 1_初识Nginx
 date: 2024-05-17 09:21:39
-tags:
+tags: Nginx
 description:
 ---
 
@@ -31,6 +31,13 @@ description:
 2. `make` 编译 
     - 新安装可用make install
     - 升级版本 make后拷贝文件(文件在objs目录)到已安装目录
+
+3. 配置环境变量
+- vim /etc/profile
+- 结尾加入
+`export NGINX_HOME=/usr/local/nginx`
+`export PATH=$PATH:$NGINX_HOME/sbin`
+- source /etc/profile 
 
 # nginx配置文件的通用语法
 - 配置文件由指令与指令块构成
@@ -195,4 +202,43 @@ wget https://tar.goaccess.io/goaccess-1.9.2.tar.gz
     - 加密 公钥加密私钥解密
     - 身份验证 私钥加密公钥解密（公钥能解开则说明报文是私钥持有者发送的）提供签名保障
 
-    
+# 证书的公信力如何保证
+浏览器验证证书有效性，主要根据：
+- 是否过期
+- 颁发此证书的根证书是否有效
+![](TLS通讯过程.png)
+
+TLS通讯最主要任务：
+1. 交换密钥
+2. 加密数据
+
+# SSL协议握手时Nginx性能瓶颈
+影响qps主要指标：
+- 小文件：握手 （密钥交换算法，RSA算法）
+- 大文件：对称加密算法(AES)
+
+优化手段：
+- 小文件较多时优化密钥交换算法（椭圆曲线算法）和RSA算法的密码强度
+- 大文件较多时优化AES算法的密码强度
+- 使用更高效算法
+
+
+
+# 使用免费SSL证书实现HTTPS网站
+## LetsEncrypt 
+1. yum install python2-certbot-nginx
+2. certbot --nginx --nginx-server-root=/home/vvf/nginx/conf/ -d  自己的域名
+    - 配置文件的server块自动新增了配置<img src="LetsEncrypt1.1.png">    
+        1. 通用参数：/etc/letsencrypt/options-ssl-nginx.conf<img src="LetsEncrypt1.2.png"/>
+        
+            - ssl_session_cache 设置1m 大概缓存4000个链接
+            - ssl_session_timeout 1440m （1440分钟=一天）
+            - ssl_protocols 支持的TLS协议
+            - ssl_prefer_server_ciphers on;//开启由nginx决定使用哪些协议（ssl_ciphers配置提供可选协议）与浏览器通讯
+            - ssl_ciphers nginx支持的安全套件，靠前优先级高
+        2. ssl_dhparam 非对称加密使用参数设置，决定加密强度
+## 内网服务
+ngrok
+
+# 基于OpenResty用lua语言实现简单服务
+

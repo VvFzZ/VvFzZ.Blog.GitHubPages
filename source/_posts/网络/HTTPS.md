@@ -6,10 +6,13 @@ description:
 ---
 # 图解HTTPS
 1. 第一次握手
-client发送TLS版本，密码套件，随机数1给服务端,收到server发送的ack结束
+    - client发送（client hello消息）TLS版本，密码套件，随机数1给服务端
+    - 收到server发送的ack结束
+    <!--more-->
 2. 第二次握手
-server发送1.确定的密码套件，TLS版本，随机数2  2.服务端证书 3.ServerHelloDone 到client，收到client发送的ack结束。 
-客户端校验证书
+    - server发送（server hello消息）1.确定的密码套件，TLS版本，随机数2  2.服务端证书 3.发送ServerHelloDone消息到client，
+    - 收到client发送的ack结束。 
+    *2,3消息之间会发送椭圆曲线算法参数，客户端收到证书后要验证证书有效性*
 3. 第三次握手 
     - client生成新随机数3（pre-master） 并用第二次握手确定的加密算法（一般是RSA）使用公钥加密，发送到服务端。
     - client根据三个随机数生成秘钥（对称加密秘钥），发送Change Cipther Spc，告诉服务端开始使用加密消息
@@ -19,7 +22,7 @@ server发送1.确定的密码套件，TLS版本，随机数2  2.服务端证书 
     - 服务端发送 Change Cipher Spc到服务端
     - 服务端发送 Encrypted Handshake Mesage（Finish）到客户端（验证服务端加密，客户端解密）
     - 收到客户端 ack结束
-<!--more-->
+
 ![](图解HTTPS.png)
 
 ## TLS 第一次握手 
