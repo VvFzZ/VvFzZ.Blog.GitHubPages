@@ -140,3 +140,96 @@ Map<Boolean, List<Person>> collect = Arrays.asList(person1, person3_, person3, p
 collect.get(true).forEach(System.out::println);
 ```
 
+# 下游收集器
+```
+Map<String, Long> collect = Arrays.asList(person1, person3_, person3, person2, person, person23).stream()
+                .collect(Collectors.groupingBy(Person::getName, Collectors.counting()));
+        collect.forEach((x, y) -> {
+            System.out.println(x + ":" + y);
+        });
+
+        Map<String, Integer> collect12 = Arrays.asList(person1, person3_, person3, person2, person, person23).stream()
+                .collect(Collectors.groupingBy(Person::getName, Collectors.summingInt(Person::getAge)));
+        collect12.forEach((x, y) -> {
+            System.out.println(x + ":" + y);
+        });
+
+
+        person3_.setAge(10);
+        Map<String, Optional<Person>> collect13 = Arrays.asList(person1, person3_, person3, person2, person, person23).stream()
+                .collect(Collectors.groupingBy(Person::getName, Collectors.maxBy(Comparator.comparingInt(Person::getAge))));
+        collect13.forEach((x, y) -> {
+            System.out.println(x + ":" + y);
+        });
+
+        Map<String, Optional<String>> collect14 = Arrays.asList(person1, person3_, person3, person2, person, person23).stream()
+                .collect(Collectors.groupingBy(Person::getName,
+                        Collectors.mapping(Person::getlName,
+                                Collectors.maxBy(Comparator.comparing(String::length)))));
+
+        collect14.forEach((x, y) -> {
+            System.out.println(x + ":" + y);
+        });
+
+        Map<String, Set<String>> collect15 = Arrays.asList(person1, person3_, person3, person2, person, person23).stream()
+                .collect(Collectors.groupingBy(Person::getName,
+                        Collectors.mapping(Person::getlName, Collectors.toSet())));
+        collect15.forEach((x, y) -> {
+            System.out.println(x + ":" + y);
+        });
+
+        Map<String, Set<String>> collect16 = Arrays.asList(person1, person3_, person3, person2, person, person23).stream()
+                .collect(Collectors.groupingBy(Person::getName,
+                        Collectors.mapping(x -> {
+                            return x.getlName() + "-x";
+                        }, Collectors.toSet())));
+        collect16.forEach((x, y) -> {
+            System.out.println(x + ":" + y);
+        });
+
+         Map<String, IntSummaryStatistics> collect17 = Arrays.asList(person1, person3_, person3, person2, person, person23).stream()
+                .collect(Collectors.groupingBy(Person::getName, Collectors.summarizingInt(Person::getAge)));
+        collect17.forEach((x, y) -> {
+            System.out.println(x + ":" + y.getAverage() + "," + y.getSum());
+        });
+
+
+        Map<String, String> collect18 = Arrays.asList(person, person1, person2, person23, person3, person3_).stream()
+                .collect(Collectors.groupingBy(Person::getName,
+                        Collectors.reducing("###",
+                                Person::getlName,
+                                (sum, item) -> {
+//                                    System.out.println("===s:" + s + "  t:" + t);
+                                    return sum.length() == 0 ? item : sum + "," + item;
+                                })));
+        collect18.forEach((x, y) -> {
+            System.out.println("x:" + x + "  y:" + y);
+        });
+
+Map<String, String> collect19 = Arrays.asList(person, person1, person2, person23, person3, person3_).stream()
+                .collect(Collectors.groupingBy(Person::getName,
+                        Collectors.mapping(Person::getlName, Collectors.joining(";"))));
+        collect19.forEach((x, y) -> {
+            System.out.println("x:" + x + "  y:" + y);
+        });
+```
+
+# 约简操作
+`reduce`
+{todo}???
+
+# 基本类型流
+
+`IntStream`  存储`short char byte boolean`
+`LongStream` 
+`DoubleStream` 存储 `double float`
+不使用包装器(区别`Stream<Integer>`等)
+
+转换为对象流 `IntStream.range(0,5).boxed()` 
+
+相关库
+Random.ints()
+Random.doubles()
+Random.longs()
+
+# 并行流
