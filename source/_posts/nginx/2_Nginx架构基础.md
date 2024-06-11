@@ -21,9 +21,9 @@ description:
 
 不仅将worker线程数设置为cpu核数，还应将worker进程绑定到固定的核上，减少缓存失效。
 # Nginx进程结构实例演示
-kill -SIGHUP masterPI  与 -s reload结果相同 ：重新启动新的worker进程、Cache Manager进程
+`kill -SIGHUP masterPI`  与 `-s reload`结果相同 ：重新启动新的worker进程、Cache Manager进程
 
-kill -SIGTERM workerPI ，worker进程收到停止信号会退出，并会向master进程发送CHLD信号，master将再拉起一个worker进程
+`kill -SIGTERM workerPI` ，worker进程收到停止信号会退出，并会向master进程发送CHLD信号，master将再拉起一个worker进程
 
 结论：命令行中的一些子命令 是在向master进程发送信号
 
