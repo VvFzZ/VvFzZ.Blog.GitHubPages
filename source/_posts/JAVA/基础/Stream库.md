@@ -233,3 +233,44 @@ Random.doubles()
 Random.longs()
 
 # 并行流
+调用`unordered`方法表示对于排序不感兴趣，可提高`distinct`性能（相同值任选其一，不必排序）
+也可提高limit的性能（实际实验室并没有提高，反而降低了）{todo}???
+
+`Collectors.groupByConcurrent`使用共享的并发映射表，值的顺序不会与流中的顺序相同。
+如下：
+
+并行流正常工作的条件：
+- 数据都在内存中。等待数据加载是低效的
+- 流应该被高效分成若干个字部分。数组或平衡二叉树支撑的流可以很好得工作，但Stream.Iterate返回的结果不行
+- 流操作的工作量应有较大规模。工作负载不大，并行流无异议。
+- 流操作不应阻塞
+```
+private static List<String> getSomeWords() {
+        Character[] characters = new Character[]{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+        Random r = new Random();
+        int[] wordsLengthArr = r.ints(100, 0, 20).toArray();
+        int wordsCount = wordsLengthArr.length;
+
+        List<String> words = new ArrayList<>();
+
+        for (int i = 0; i < wordsCount; i++) {
+            int wordLength = wordsLengthArr[i];
+            int[] wordCharRandom = r.ints(wordLength, 0, 25).toArray();//单词的每个字母下标
+            Character[] word = new Character[wordLength];
+
+            for (int j = 0; j < wordLength; j++) {
+                word[j] = characters[wordCharRandom[j]];
+            }
+
+            String s = Arrays.stream(word).map(String::valueOf).collect(Collectors.joining());
+            words.add(s);
+            System.out.println(s);
+        }
+        return words;
+    }
+
+        System.out.println(words.parallelStream().collect(Collectors.groupingBy(String::length)));//每次结果相同
+        System.out.println(words.parallelStream().collect(Collectors.groupingByConcurrent(String::length)));//每次结果不同
+        System.out.println(words.parallelStream().collect(Collectors.groupingBy(String::length)));
+        System.out.println(words.parallelStream().collect(Collectors.groupingByConcurrent(String::length)));
+```
