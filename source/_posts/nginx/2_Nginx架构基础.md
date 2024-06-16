@@ -66,3 +66,141 @@ nginx命令行工具会读取 nginxpid 文件中的NginxPID  将nginx命令转�
 3. 关闭空闲连接
 4. 在循环中等待全部连接关闭（当超过定时器后会强制关闭，不再优雅）
 5. 退出进程
+
+# 网络收发与Nginx事件的对应关系
+Nginx事件驱动（网络事件）框架
+每对链接对应读事件、写事件
+
+<img src="TCP协议与非阻塞接口.png"/>
+
+# Nginx网络事件实例演示
+<img src="TCP抓包1.png"/>
+当nginx所在服务器收到客户端返回的ack后，操作系统通知nginx收到读事件，此读事件是一个建立新链接
+
+# Nginx事件驱动模型
+<img src="Nginx事件循环.png" />
+
+Nginx服务器上第三方模块占用大量cpu时导致大量事件超时
+解决：如GZIP分段使用CPU
+
+# epoll的优劣及原理
+Number of file description 句柄数（并发链接数）
+获取事件队列的间隔很短，收到有效的报文有限，活跃链接有限
+select或poll实现有问题：将所有链接丢给操作系统判断哪些链接有事件输入
+epoll维护一个链表rdllink，取活跃链接时遍历此链表即可
+操作系统接收到事件插入或nginx处理完成删除时间复杂度Log(n)
+<img src="epoll.png" />
+
+# Nginx的请求切换
+<img src="请求切换.png" />
+当前cpu频率进程间切换消耗大概5微妙
+当并发请求低时几百左右，可以接受进程切换
+当并发数到达万级已不可接受
+
+# 同步、异步、阻塞、非阻塞
+阻塞、非阻塞：操作系统提供的方法被调用，不满足条件时导致进程切换，当前进程阻塞。非阻塞不会在时间片未结束时切换被切换。
+同步、异步：代码调用方式的区别
+
+## 阻塞调用
+<img src="阻塞调用.png" />
+Nginx并发连接太多不适合阻塞调用
+
+## 非租塞调用
+<img src="非租塞调用.png" />
+
+## 非阻塞调用下的同步与异步
+<img src="非阻塞调用下的同步与异步.png" />
+同步调用代码使用非阻塞方式
+
+` local ok，err = client:connect(ip,port) `  同步调用代码阻塞openresty调用代码，但不会阻塞nginx代码。
+
+# Nginx的模块究竟是什么
+<img src="Nginx模块.png" />
+通用模块 ngx_module 
+子模块 
+ngx_core_module_t 
+ngx_http_module_t
+ngx_event_module_t
+...
+
+# 模块分类
+- NGX_CORE_MODULE
+    1. events类模块 （源码文件/nginx/event）
+        - event_core :每类模块的通用模块（index:1）
+        - epoll
+    2. http类模块 （源码文件/nginx/http）
+        - ngx_http_core_module
+        - 请求处理模块 
+        - 相应过滤模块 （请求二次处理）
+        - upstream相关模块 （负载均衡）
+    3. mail类模块 （源码文件/nginx/mail）
+    4. stream类模块 （源码文件/nginx/stream）
+- NGX_CONF_MODULE
+<img src="模块分类.png" />
+
+# Nginx如何通过连接池处理网络请求
+<img src="连接池.png" />
+connections 用于客户端与上游服务器的连接，所以若做一层反向代理，每一个客户端消耗两个connection。
+
+<img src="核心数据结构.png" />
+每个connection对应两个事件，一个读和一个写事件 
+使用一个链接内存大小：232+96*2 字节，connections配置会预分配相应内存
+
+高并发nginx配置需要配置足够大的connection
+
+# 内存池对性能的影响
+
+connection_pool_size 连接内存池
+预分配内存，减少运行时分配次数，提高性能
+小块内存优化，减少碎片，提高利用率
+
+request_pool_size 请求内存池
+需要保存url信息，相对较长
+
+对于长链接，一个connection对应n个request
+
+注意：两个内存池不可混用 (释放延迟，内存使用增加)
+
+# 所有worker进程协同工作的关键：共享内存
+
+## 通讯方式
+- 信号（进程管理）
+- 共享内存（数据同步，nginx跨进程通信最有效手段）
+    1. 锁
+    2. slab内存管理器
+    3. 可用的两种数据结构：rbtree、链表
+
+
+## 使用共享内存的模块
+<img src="使用共享内存的模块.png" />
+
+### OpenResty共享内存
+<img src="OpenResty共享内存代码示例.png" />
+同时使用rbtree（保存kv）和链表（超过内存上限lru淘汰）
+
+`lua_shared_dict` 分配共享内存指令
+
+# 用好共享内存的工具：slab管理器
+<img src="Slab内存管理.png" />
+分页-切分不同大小的slot（32Byte、64Byte...） 
+
+- bestfit分配方式 
+    1. 适合小对象 ,有内存浪费（最多两倍的内存消耗）
+    2. 避免碎片
+    3. 避免重复初始化(特定页存储特定数据结构的数据)
+
+# 哈希表的max_size与bucket_zize如何配置
+
+# Nginx常用容器：红黑树
+
+# 使用动态模块来提升运维效率
+<img src="动态模块.png" />
+动态库目录：/nginx/modules
+
+配置文件需配置动态模块位置：load_modules modules/module_name.so (load_modules与event、http同级)
+
+linux 动态库：*.so 
+
+
+
+

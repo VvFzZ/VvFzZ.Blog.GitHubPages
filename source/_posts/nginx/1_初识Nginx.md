@@ -2,7 +2,7 @@
 title: 1_初识Nginx
 date: 2024-05-17 09:21:39
 tags: Nginx
-description:
+description: 
 ---
 
 # nginx优点
@@ -22,17 +22,34 @@ description:
 
 # 安装
 
-1. `./configure` 配置和准备软件包以进行编译和安装
-    - 参数说明
+1. 解压后的文件说明
+    - auto 
+        - cc 用于编译
+        - lib lib库
+        - os 对操作系统的判断
+        - type 
+    - CHANGE 特性
+    - conf 示例文件
+    - configure 脚本，编译前准备工作
+    - contrib 
+    - LICENSE
+    - man nginx帮助文件
+    - src 源码
+
+2. `./configure` 配置和准备软件包以进行编译和安装
+    - 参数说明 (帮助命令`./configure --help|more`)
         - 指定 --prefix 目录 ，其他目录会在此目录下新建相应目录
         - --with-\*_module  、 --without-\*_module 指定使用或不使用哪些模块
         - --with-* 编译时需指定的特殊参数
+        - --add-module=第三方模块路径
     - 生成objs目录  
-2. `make` 编译 
-    - 新安装可用make install
+        1. ngx_modules.c 包含的模块
+
+3. `make` 编译 
+    - 新安装可用make install 
     - 升级版本 make后拷贝文件(文件在objs目录)到已安装目录
 
-3. 配置环境变量
+4. 配置环境变量
 - vim /etc/profile
 - 结尾加入
 `export NGINX_HOME=/usr/local/nginx`
@@ -102,7 +119,7 @@ http配置指令块
 ## 配置location
 
 location /statics/ {
-    alias statics;//静态文件根目录  不使用root，root会带入rul路径
+    alias statics;//静态文件根目录  不使用root，root会带入url路径
     autoindex on; //开启目录浏览
     set $limit_rate 1k; //每秒传输1k字节到浏览器；多用户高并发时限制响应流量，防止大文件传输影响其他文件访问
 }
