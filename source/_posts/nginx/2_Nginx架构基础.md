@@ -3,8 +3,9 @@ title: 2_Nginx架构基础
 date: 2024-05-26 10:35:05
 tags: 
     - Nginx
-description:
+description: Nginx架构基础：进程模型、数据结构等
 ---
+
 # 请求处理流程
 <img src="nginx请求处理流程.png"></img>
 

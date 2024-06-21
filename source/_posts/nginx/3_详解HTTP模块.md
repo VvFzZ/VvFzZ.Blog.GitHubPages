@@ -207,3 +207,38 @@ index模块先于autoindex模块执行，所以有时访问目录会返回目录
 ## autoindex
 可通过`--without-http_autoindex_module`禁用autoindex
 <img src="autoindex指令.png" />
+
+# 提升多个小文件性能的concat模块
+
+# access日志的详细用法
+## 日志配置
+<img src="配置日志文件路径.png">
+buffer 减少磁头旋转，减少寻址时间
+
+## 日志文件包含变量时的优化
+<img src="日志文件包含变量时的优化.png">
+
+# HTTP过滤模块的调用流程
+content模块之后，log模块之前
+
+# 用过滤模块更改响应中的字符串：sub模块
+
+# 用过滤模块在http响应的前后添加内容：addition模块
+
+# 使用变量防盗链的referer模块
+
+<img src="referer模块指令.png">
+
+<img src="valid_referers指令.png">
+经过反向代理或防火墙等可能出现有referer头没有值的情况
+
+<img src="invalid_referer示例.png">
+
+# 使用变量实现防盗链功能实践：secure_link模块
+
+# 为复杂的业务生成新的变量：map模块
+
+# 通过变量指定少量用户实现AB测试：split_client模块
+
+# 根据IP地址范围的匹配生成新变量：geo模块
+
