@@ -17,3 +17,5 @@ description: markdown语法
 <mark>高亮</mark>
 图片1:![]()
 图片2：<img src="1.png" width="10px" height="10px">
+
+>*[官方教程](https://markdown.com.cn/basic-syntax/emphasis.html)*
