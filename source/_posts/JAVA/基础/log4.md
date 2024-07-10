@@ -2,8 +2,9 @@
 title: log4
 date: 2024-06-24 15:36:30
 tags: log4
-description:
+description: 配置文件及说明
 ---
+
 # 配置文件及说明
 ```
 # Global logging configuration

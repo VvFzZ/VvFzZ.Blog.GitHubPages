@@ -10,7 +10,7 @@ description:
 2. 跨平台
 3. 轻量级
 4. 成本低
-
+<!--more-->
 # 安装
 ## windows
 登录命令： mysql -hlocalhost -uroot -proot

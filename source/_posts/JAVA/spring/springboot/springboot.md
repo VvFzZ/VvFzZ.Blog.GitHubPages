@@ -4,7 +4,17 @@ date: 2024-06-27 17:13:12
 tags: springboot
 description:
 ---
-
+- springboot 整合servlet
+- 静态文件处理
+- springMVC扩展 
+- thymeleaf
+- 国际化
+- 整合jdbc
+- 整合druid
+- 配置多数据源
+- spring集成mybatis
+- 表单接收方式
+- 源码解析
 <!--more-->
 
 springboot 优点
