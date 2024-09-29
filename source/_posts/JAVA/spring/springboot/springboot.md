@@ -656,57 +656,275 @@ spring.servlet.multipart.max-file-size = 200MB
 # 源码解析
 ## 启动(run方法)
 ### new SpringApplication()
-- 获取 webApplicationType
+- 获取 webApplicationType(NONE,SERVLET,REACTIVE;)
 - 读取配置 META-INF/spring.factories 
     - 文件位置 spring-boot包、spring-boot-autoconfigure包
 - 初始化ApplicationContextInitializer类型实例
 - 初始化ApplicationListener类型实例
 - 获取启动主类 
 ### run
-- 设置java.awt.headless=true 无显示模式
-- 获取SpringApplicationRunListener （EventPublishingRunListener）
-- EventPublishingRunListener 启动相关ApplicationStartingEvent事件
-- new DefaultApplicationArguments(args); （构造方法）解析命令行参数
-- prepareEnvironment(listeners, bootstrapContext, applicationArguments);
-    - 解析解析servletConfigInitParams、servletContextInitParams、jndiProperties、systemProperties、systemEnvironment
-        - 根据webApplicationType类型，创建new ApplicationServletEnvironment() 
-        - 创建ApplicationServletEnvironment实例时 StandardServletEnvironment 解析servletConfigInitParams、servletContextInitParams、jndiProperties； StandardEnvironment解析systemProperties、systemEnvironment
-            - (ApplicationServletEnvironment extens StandardServletEnvironment extens  StandardEnvironment extens AbstractEnvironment  AbstractEnvironment 构造方法调用customizePropertySources())
-    - configureEnvironment 解析命令行参数、解析profile(空方法？)
-    - listeners.environmentPrepared 筛选支持ApplicationEnvironmentPreparedEvent事件的listners执行listner对应的onApplicationEvent方法
-        - EnvironmentPostProcessorApplicationListener 获取ConfigDataEnvironmentPostProcessor ,YamlPropertySourceLoader解析.yaml/.yml配置文件(PropertiesPropertySourceLoader解析 .properties/.xml配置文件)
-        - 2.4之前版本使用configFileApplicationListner 处理配置文件
-    - 加载banner 配置：
+#### 创建上下文对象 createBootstrapContext
+执行ApplicationContextInitializer ？？？这些初始化器干了啥???
+#### 设置headless 
+java.awt.headless=true 无显示模式
+#### getRunListeners
+获取SpringApplicationRunListener类型的listner （SpringApplicationRunListener包含Listner的集合，但只有一个：EventPublishingRunListener,EventPublishingRunListener贯穿应用程序启动过程，后续获取监听器都通过它）
+
+SpringApplicationRunListeners 是SpringApplicationRunListener集合的包装器，提供启动的不同阶段需执行的方法（遍历具体Listner执行具体方法）
+#### RunListeners.starting 
+EventPublishingRunListener.initialMulticaster.multicastEvent()
+遍历ApplicationListener类型实例(创建SpringApplication实例时已初始化完成)，执行其中ApplicationStartingEvent事件相关的Listners
+
+#### 初始化DefaultApplicationArguments(args); 
+构造方法中解析命令行参数（--server.port=8089），返回ApplicationArguments对象
+#### 环境准备 
+`prepareEnvironment(listeners, bootstrapContext, applicationArguments);`
+##### 获取或者创建环境对象
+
+`getOrCreateEnvironment()`
+
+根据webApplicationType创建Environment对象,创建`ApplicationServletEnvironment`对象时初始化`PropertySource`，`PropertyResolver`
+###### 1
+```
+case SERVLET:
+				return new ApplicationServletEnvironment();
+			case REACTIVE:
+				return new ApplicationReactiveWebEnvironment();
+			default:
+				return new ApplicationEnvironment();
+```
+###### 2
+- ApplicationServletEnvironment构造方法中，初始化PropertySource，PropertyResolver ，如下：
+    - StubPropertySource:(servletConfigInitParams、servletContextInitParams)
+    - JndiPropertySource:(jndiProperties)
+    - PropertiesPropertySource:(systemProperties)
+    - SystemEnvironmentPropertySource:(systemEnvironment)的
+    - propertyResolver:PropertySourcesPropertyResolver
+- AbstractEnvironment构造方法初始化的propertySources：MutablePropertySources。propertySources是PropertySourceList的包装器
+- PropertySource 包含数据源
+- PropertyResolver 提供接口从PropertySource中获取数据
+
+##### 配置环境
+`configureEnvironment`配置ApplicationServletEnvironment对象
+- 设置Converters、Formaters
+- configureEnvironment 解析命令行参数：SimpleCommandLinePropertySource.parse()
+- 解析profile(空方法？)
+##### ConfigurationPropertySources.attach
+添加 ConfigurationPropertySourcesPropertySource（configurationProperties)
+##### 环境准备
+`listeners.environmentPrepared`
+listeners（EventPublishingRunListener），筛选支持ApplicationEnvironmentPreparedEvent事件的listners（factory.properties文件中key为ApplicationListener）：
+- `EnvironmentPostProcessorApplicationListener`
+- `AnsiOutputApplicationListener`
+- `LoggingApplicationListener`
+- `BackgroundPreinitializer`
+- `DelegatingApplicationListener`
+- `FileEncodingApplicationListener`
+
+###### EnvironmentPostProcessorApplicationListener
+
+从spring.factories文件获取EnvironmentPostProcessor，如下7个
+```
+cloud.CloudFoundryVcapEnvironmentPostProcessor,
+context.config.ConfigDataEnvironmentPostProcessor,
+env.RandomValuePropertySourceEnvironmentPostProcessor,
+env.SpringApplicationJsonEnvironmentPostProcessor,
+env.SystemEnvironmentPropertySourceEnvironmentPostProcessor,
+reactor.DebugAgentEnvironmentPostProcessor
+autoconfigure.integration.IntegrationPropertiesEnvironmentPostProcessor
+```
+
+1. `RandomValuePropertySourceEnvironmentPostProcessor`
+添加RandomValuePropertySource到MutablePropertySources 解析随机数
+
+2. `SystemEnvironmentPropertySourceEnvironmentPostProcessor`
+替换`systemEnvironment`（`SystemEnvironmentPropertySource`对象）为
+`OriginAwareSystemEnvironmentPropertySource`（包含
+`SystemEnvironmentPropertySource`）
+
+3. `SpringApplicationJsonEnvironmentPostProcessor`
+解析`spring.application.json={"a":1}`配置
+查询`spring.application.json`配置，若存在则添加`JsonPropertySource`
+
+4. `CloudFoundryVcapEnvironmentPostProcessor`
+
+5. `ConfigDataEnvironmentPostProcessor`
+**重点：解析配置文件过程** 
+`YamlPropertySourceLoader`解析.yaml/.yml配置文件(`PropertiesPropertySourceLoader`解析 .properties/.xml配置文件)
+2.4之前版本使用`configFileApplicationListner` 处理配置文件
+
+6. `DebugAgentEnvironmentPostProcessor`
+
+7. `IntegrationPropertiesEnvironmentPostProcessor`
+读取`META-INF/spring.integration.properties`配置，添加
+`IntegrationPropertiesPropertySource`到 `MutablePropertySources`
+
+
+###### AnsiOutputApplicationListener
+
+###### LoggingApplicationListener
+
+###### BackgroundPreinitializer
+
+###### DelegatingApplicationListener
+
+###### FileEncodingApplicationListener
+
+#### `configureIgnoreBeanInfo`
+设置系统属性spring.beaninfo.ignore=true
+
+#### 加载banner 
+配置：
     `spring:banner:location:banner.txt;  spring:banner:image:location:banner.png;`
-    - 创建上下文对象
-    createApplicationContext 
-        1. 读取ApplicationContextFactory类型的listner，根据webApplicationType筛选listner
-        2. 创建的AnnotationConfigServletWebServerApplicationContext，包含reader、scaner
+#### 创建上下文对象
+`createApplicationContext() `方法    
+**关键点**：AnnotationConfigServletWebServerApplicationContext继承类图及构造方法做的初始化.
+继承关系：
+```
+AnnotationConfigServletWebServerApplicationContext 
+extends ServletWebServerApplicationContext
+extends GenericWebApplicationContext
+extends GenericApplicationContext
+extends AbstractApplicationContext
+extends DefaultResourceLoader
+```
+
+1. 读取ApplicationContextFactory类型的listner，根据webApplicationType筛选listner
+2. 创建的AnnotationConfigServletWebServerApplicationContext，包含reader、scaner
             - reader: bean注册，包含condition判断
             - scaner: 包扫描，扫描@Controller、@Service等
-    - 准备上下文对象
-    prepareContext（注入[初始化]属性值）
-        - applyInitializers():应用所有初始化器（创建application对象时，读取的spring.factories配置的ApplicationContextInitializer）
-        initializer的作用：注册listner和postprocess
-        ```
-        Initializers
-        org.springframework.context.ApplicationContextInitializer=\
-        org.springframework.boot.autoconfigure.SharedMetadataReaderFactoryContextInitializer,\
-        org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener
-        Application Context Initializers
-        org.springframework.context.ApplicationContextInitializer=\
-        org.springframework.boot.context.ConfigurationWarningsApplicationContextInitializer,\
-        org.springframework.boot.context.ContextIdApplicationContextInitializer,\
-        org.springframework.boot.context.config.DelegatingApplicationContextInitializer,\
-        org.springframework.boot.rsocket.context.RSocketPortInfoApplicationContextInitializer,\
-        org.springframework.boot.web.context.ServerPortInfoApplicationContextInitializer
-        ```
-        - listeners.contextPrepared(context); 获取支持ApplicationContextInitializedEvent事件的listners[spring.factories文件中 key为org.springframework.context.ApplicationListener]并执行
-        - context.addBeanFactoryPostProcessor(new PropertySourceOrderingBeanFactoryPostProcessor(context));
-        - load ，注册Application对象
-        - listeners.contextLoaded(context);
-            - 获取支持ApplicationPreparedEvent事件的listner，执行onApplicationEvent方法
-        
+#### 准备上下文对象`prepareContext()`
+prepareContext（注入[初始化]属性值）
+?************************?
+#####  `postProcessApplicationContext()`
+
+##### `applyInitializers()` 执行所有初始化器
+执行所有初始化器（创建application对象时，读取的spring.factories配置的ApplicationContextInitializer 7个，如下：）
+initializer的作用：注册ApplicationListner(3个)，BeanFactoryPostProcessor(2个)，设置上下文id
+
+```
+Initializers
+org.springframework.context.ApplicationContextInitializer=\
+org.springframework.boot.autoconfigure.SharedMetadataReaderFactoryContextInitializer,\（添加CachingMetadataReaderFactoryPostProcessor）
+org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener
+
+Application Context Initializers
+org.springframework.context.ApplicationContextInitializer=\
+org.springframework.boot.context.ConfigurationWarningsApplicationContextInitializer,\
+org.springframework.boot.context.ContextIdApplicationContextInitializer,\
+org.springframework.boot.context.config.DelegatingApplicationContextInitializer,\ 
+org.springframework.boot.rsocket.context.RSocketPortInfoApplicationContextInitializer,\
+org.springframework.boot.web.context.ServerPortInfoApplicationContextInitializer
+```
+
+- `DelegatingApplicationContextInitializer`
+什么也没做
+
+- `SharedMetadataReaderFactoryContextInitializer`
+添加`BeanFactoryPostProcessor`到上下文对象 （`CachingMetadataReaderFactoryPostProcessor`）
+
+- `ContextIdApplicationContextInitializer`
+设置applicationContextId
+
+- `ConfigurationWarningsApplicationContextInitializer`
+添加`BeanFactoryPostProcessor`到上下文对象 
+`context.addBeanFactoryPostProcessor(new ConfigurationWarningsPostProcessor(getChecks()));`
+
+- `RSocketPortInfoApplicationContextInitializer`
+添加ApplicationListner到上下文对象
+`Listener implements ApplicationListener<RSocketServerInitializedEvent>`
+
+- `ServerPortInfoApplicationContextInitializer`
+添加ApplicationListner到上下文对象
+`applicationContext.addApplicationListener(this);`添加自己
+
+- `ConditionEvaluationReportLoggingListener`
+添加ApplicationListner到上下文对象
+`applicationContext.addApplicationListener(new ConditionEvaluationReportListener());`
+
+##### `listeners.contextPrepared(context); `
+获取支持ApplicationContextInitializedEvent事件的listners[spring.factories文件中 key为org.springframework.context.ApplicationListener]并执行（没有做任何事情）
+
+- BackgroundPreinitializer
+do nothing
+- DelegatingApplicationListener
+do nothing
+
+##### bootstrapContext.close(context)
+查找支持BootstrapContextClosedEvent的ApplicationListeners（没有）执行
+
+##### context.addBeanFactoryPostProcessor(new PropertySourceOrderingBeanFactoryPostProcessor(context));
+
+
+##### load 
+加载资源配置，自动配置在此时完成
+###### 相关类
+- BeanDefinitionRegistry
+- BeanDefinitionLoader    
+    - AnnotatedBeanDefinitionReader
+        - ConditionEvaluator
+        - AnnotationConfigUtils
+            - BeanDefinitionHolder
+            - RootBeanDefinition                
+                - ConfigurationClassPostProcessor
+            
+    - XmlBeanDefinitionReader
+    - GroovyBeanDefinitionReader
+    - ClassPathBeanDefinitionScanner
+        - ClassExcludeFilter
+
+
+##### listeners.contextLoaded(context);
+
+获取支持ApplicationPreparedEvent事件的listner，执行onApplicationEvent方法
+
+#### 刷新上下文 refreshContext
+**重点**做了啥？？？???
+#### afterRefresh 
+???？？？默认不做任何处理，方便扩展
+#### listeners.started （listner只包含EventPublishingRunListener）
+
+#### callRunners(context, applicationArguments);
+
+## 启动总结
+### 创建SpringApplication对象
+#### 初始化initializers、listeners、获取启动主类
+### 创建早期上下文对象
+执行ApplicationContextInitializer
+### 获取SpringApplicationRunListener
+EventPublishingRunListener
+### EventPublishingRunListener.start
+EventPublishingRunListener.starting()
+执行ApplicationStartingEvent相关的Listeners
+### 创建环境对象
+`ApplicationServletEnvironment`
+初始化`PropertySource`，`PropertyResolver`
+### 配置环境对象
+设置Converters、Formaters、configureEnvironment 解析命令行参数
+### 准备环境对象
+`ApplicationServletEnvironment`
+
+`EventPublishingRunListener.EnvironmentPrepared()`,执行支持`ApplicationEnvironmentPreparedEvent`事件的listener，其中主要类：
+`EnvironmentPostProcessorApplicationListener`,
+从spring.factories文件获取`EnvironmentPostProcessor`，其中的`ConfigDataEnvironmentPostProcessor`，解析配置文件
+`YamlPropertySourceLoader`解析.yaml/.yml配置文件(`PropertiesPropertySourceLoader`解析 .properties/.xml配置文件)
+2.4之前版本使用`configFileApplicationListner` 处理配置文件
+
+### 创建上下文对象
+`AnnotationConfigServletWebServerApplicationContext`
+### 准备上下文对象
+#### 执行所有初始化器`applyInitializers()`
+注册ApplicationListner(3个)，BeanFactoryPostProcessor(2个)，设置上下文id
+#### `EventPublishingRunListener.contextPrepared(context); `
+获取支持ApplicationContextInitializedEvent事件的listners并执行
+（获取到的listeners为空）
+#### 添加 PropertySourceOrderingBeanFactoryPostProcessor(context)
+
+
+
+
+### 刷新上下文对象
+
 # spring事件机制
 
 ## 事件类型
