@@ -32,7 +32,7 @@ ChannelHandler
 ChannelHandlerContext
 
 - 事件调度层
-通过 Reactor 模型对各类事件进行聚合处理，通过 Selector 主循环线程集成多种事件
+通过 Reactor 模型对各类事件进行聚合处理，通过Selector 主循环线程集成多种事件
 EventLoopGroup
 EventLoop
 
