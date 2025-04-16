@@ -38,4 +38,8 @@ Java1.6增加了allowCoreThreadTimeOut(boolean value)方法允许核心线程超
 **拒绝策略**
 有界队列，任务过多触发拒绝策略，线程池默认拒绝策略会throw RejectedExecutionException运行时异常，编译器不会强制处理它，避免容易忽略，默认拒绝策略要慎用。
 重要的任务要自定义拒绝策略，与降级策略配合使用。
+**异常**
+ThreadPoolExecutor.execute提交任务，执行出现异常线程终止，但获取不到通知，需自己捕获异常按需处理。
 
+# 其他
+SpringBoot线程池 ThreadPoolTaskExecutor 可设置线程名前缀

@@ -170,6 +170,7 @@ void checkAll(){
 # 总结
 
 CountDownLatch 主要用来解决一个线程等待多个线程的场景，计数器是不能循环利用的，计数器为0时await直接通过
+
 CyclicBarrier 是一组线程之间互相等待，计数器是可以循环利用的，可设置回调函数
 
 
@@ -180,5 +181,5 @@ CompletableFuture<List> dOrderFuture = CompletableFuture.supplyAsync(this::getDO
 pOrderFuture.thenCombine(dOrderFuture, this::check).thenAccept(this::save);
 ```
 # 问题
-CyclicBarrier 的回调函数我们使用了一个固定大小的线程池，有必要吗？
-有，
+CyclicBarrier的回调函数我们使用了一个固定大小的线程池，有必要吗？
+

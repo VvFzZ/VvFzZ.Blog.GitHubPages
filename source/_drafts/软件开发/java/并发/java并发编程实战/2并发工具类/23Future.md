@@ -49,13 +49,11 @@ FutureTask实现了Runnable和Future接口
 
 示例1.提交给ThreadPoolExecutor去执行
 ```
-
 // 创建FutureTask
 FutureTask<Integer> futureTask
   = new FutureTask<>(()-> 1+2);
 // 创建线程池
-ExecutorService es = 
-  Executors.newCachedThreadPool();
+ExecutorService es = Executors.newCachedThreadPool();
 // 提交FutureTask 
 es.submit(futureTask);
 // 获取计算结果

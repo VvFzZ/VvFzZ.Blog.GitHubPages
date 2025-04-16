@@ -18,6 +18,17 @@ java语言层面synchronized实现管程为什么还提供SDK并发包里的实�
 
 synchronized阻塞状态调用线程的interrupt方法不会中断
 ## ReentrantLock
+volatile/CAS/AQS
+
+AQS 同步队列 FIFO 双向链表
+实现条件变量的条件队列 单向链表 用于支持await/signal
+调用await时，释放锁进入条件队列，调用signal时，从条件队列迁移至同步队列，重新竞争锁。
+
+**同步队列为什么使用双向链表**
+为了支持高效的线程管理和同步操作，
+- 高效删除任意节点，单链表需遍历
+如超时，取消等待，迁移到条件队列
+
 **ReentrantLock 如何保证可见性**
 关键点：volatile state
 获取锁时先读写state，释放锁时再次读写state，happens-before传递性保证可见

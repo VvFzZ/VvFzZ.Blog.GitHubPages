@@ -11,11 +11,9 @@ description:
 注意事项：
 - 不支持重入
 - 不支持条件变量
-- 中断使用readLockInterruptibly、 writeLockInterruptibly
+- 中断使用readLockInterruptibly、writeLockInterruptibly
 ```
-final StampedLock sl = 
-  new StampedLock();
-  
+final StampedLock sl = new StampedLock();  
 // 获取 / 释放悲观读锁示意代码
 long stamp = sl.readLock();
 try {
@@ -31,7 +29,6 @@ try {
 } finally {
   sl.unlockWrite(stamp);
 }
-
 
 class Point {
   private int x, y;
@@ -61,8 +58,9 @@ class Point {
   }
 }
 ```
-上例中升级为悲观读锁是合理的，否则需要循环执行乐观读，直到乐观读期间没有写操作，避免循环读浪费大量CPU。
+上例中升级为悲观读锁是合理的，否则需要循环执行乐观读直到乐观读期间没有写操作，避免循环读浪费大量CPU。
 
 ## 数据库乐观锁
 增加版本号列，每次更新时验证版本号是否是最新的
-
+优点：利用数据库行锁进行并发控制，降低锁粒度。相对业务悲观锁降低复杂度，不需要处理死锁及超时问题。
+应用场景：短事务，不侵入业务处理，集成简单

@@ -64,7 +64,7 @@ class Cache<K,V> {
     // 缓存中存在，返回
     if(v != null) {   ④
       return v;
-    }  
+    }
     // 缓存中不存在，查询数据库
     w.lock();         ⑤
     try {
@@ -83,6 +83,33 @@ class Cache<K,V> {
   }
 }
 ```
+**问题？？？？**
+get方法读为什么加锁，只给写加锁不行吗？如下
+V get(K key) {
+
+    v = m.get(key); ②
+
+    // 缓存中存在，返回
+    if(v != null) {   ④
+      return v;
+    }
+    // 缓存中不存在，查询数据库
+    w.lock();         ⑤
+    try {
+      // 再次验证
+      // 其他线程可能已经查询过数据库
+      v = m.get(key); ⑥
+      if(v == null){  ⑦
+        // 查询数据库
+        v= 省略代码无数
+        m.put(key, v);
+      }
+    } finally{
+      w.unlock();
+    }
+    return v; 
+  }
+
 ## 锁升级降级
 锁升级：先是获取读锁，再升级为写锁
 ReadWriteLock不支持锁升级，支持降级
