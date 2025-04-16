@@ -97,10 +97,12 @@ public class PostGatewayFilterFactory extends AbstractGatewayFilterFactory {
   public PostGatewayFilterFactory() {
     super(Config.class);
   }
+
   public GatewayFilter apply() {
     return apply(o -> {
     });
   }
+
   @Override
   public GatewayFilter apply(Config config) {
     return (exchange, chain) -> {
@@ -110,11 +112,11 @@ public class PostGatewayFilterFactory extends AbstractGatewayFilterFactory {
       }));
     };
   }
+  
   public static class Config { //读取路由配置信息
   }
 }
 ```
-
 
 ## 内置过滤器
 ### 限流过滤器 

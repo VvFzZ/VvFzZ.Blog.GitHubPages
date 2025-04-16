@@ -106,6 +106,9 @@ class PersonHandler implements InvocationHandler {
 }
 ```
 
+
+
+
 #### CGLIB动态代理
 
 ```
@@ -127,7 +130,7 @@ class PersonProxyFactory {
         Enhancer enhancer = new Enhancer();
         enhancer.setSuperclass(Person.class);
         enhancer.setCallback(new PersonProxy());
-        Object r = enhancer.create(cls, args);
+        Object r  = enhancer.create(cls, args);
         return (Person) r;
     }
 }

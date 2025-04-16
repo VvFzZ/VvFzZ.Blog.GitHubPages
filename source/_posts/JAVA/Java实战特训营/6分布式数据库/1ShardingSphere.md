@@ -61,7 +61,9 @@ ShardingSphere兼容JDBC规范
 
 ## ShardingSphere-JDBC
 轻量级Java框架，在Java的JDBC层提供的额外服务
-![](1-ShardingSphere-JDBC.png)
+<!-- ![]() -->
+<img src='1-ShardingSphere-JDBC.png' width='350px' height='200px'>
+
 ### 兼容性
 - ORM框架
 JPA、Hibernate、MyBatis等
@@ -72,7 +74,9 @@ MySOL、Oracle、sOLServer、PostgresQL等
 
 ## ShardingSphere-Proxy
 透明化的数据库代理端，通过实现数据库二进制协议，对异构语言提供支持
-![](1-ShardingSphere-Proxy.png)
+<!-- ![]() -->
+<img src='1-ShardingSphere-Proxy.png' width='450px' height='250px'>
+
 ### 兼容性
 - 异构语言
 封装了数据库二进制协议的服务端版本
@@ -99,12 +103,10 @@ MySQL命令行客户端、MySQLWorkbench、Navicat等
 支持不同工作负载下的数据隔离，避免测试数据污染生产环境
 
 # JDBC规范与ShardingSphere原理分析
-
-Sharding-JDBC是如何做到能够完全兼容IDBC规范的？
-从JDBC核心API进行切入？
-智能，透明的分片引擎
-
-
+Sharding-JDBC是如何做到能够完全兼容JDBC规范的？
+JDBC规范：DataSource,Connection,Statement,exec sql,ResultSet,close resource
+ShardingSphere对JDBC核心对象扩展注入分片处理
+jdbc提供的扩展接口：Wrapper接口，ShardingSphere利用适配器模式封装分片对象
 
 # 问题
 列举分库分表框架，描述异同点？

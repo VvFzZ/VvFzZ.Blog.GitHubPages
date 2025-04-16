@@ -48,10 +48,10 @@ ClassPathXmlApplicationContext("spring/dubbo-consumer.xml");
 违反接口契约，慎用
 
 
-# 案例
-## 引入依赖
+## 案例
+### 引入依赖
 
-## 配置
+### 配置
 ```
 dubbo:
   protocol:
@@ -67,7 +67,7 @@ integration:
   service:
     version: 1.0.0
 ```
-## DubboReference
+### DubboReference
 ```
 @Component
 public class CustomClient {
@@ -81,7 +81,7 @@ public class CustomClient {
     }
 }
 ```
-# 问题
+## 问题
 针对服务引用，Dubbo提供哪些功能特性？
 
 

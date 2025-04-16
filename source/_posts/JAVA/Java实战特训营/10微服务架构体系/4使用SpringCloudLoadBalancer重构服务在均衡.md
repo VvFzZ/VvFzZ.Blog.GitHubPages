@@ -16,7 +16,9 @@ tags:
 - 定制化路由策略
 
 # Spring Cloud LoadBalancer用法
-有哪些服务？如何选择其中一个？谁来分发？（服务端、客户端）
+有哪些服务？
+如何选择其中一个？（负载均衡算法）
+谁来分发？（服务端分发、客户端分发）
 ## 获取服务列表
 `DiscoveryClient`
 ```
@@ -57,6 +59,10 @@ public User getUserByUserName(String userName){
 **源IP哈希 Source IP Hash**'
 
 **一致性哈希 Consistent Hash**
+常用用负载均衡系统和分布式缓存
+扩容缩容只影响相邻节点
+虚拟节点解决负载不均
+
 
 ### 动态算法
 **最少链接算法**

@@ -11,24 +11,146 @@ description: SpringBoot测试解决方案和实践
 集成测试：组件级别，模块间、服务间
 端到端测试：服务级别，业务流程开展的测试，覆盖多服务（关注服务之间数据和状态传递）
 
-
-
 # Spring Boot测试方案和流程
 
 ## 依赖
-![](6-SpringBoot测试依赖.png)
+```
+<dependency>
+     <groupId>org.springframework.boot</groupId>
+     <artifactId>spring-boot-starter-test</artifactId>
+     <scope>test</scope>
+     <exclusions>
+         <exclusion>
+             <groupId>org.junit.vintage</groupId>
+             <artifactId>junit-vintage-engine</artifactId>
+         </exclusion>
+     </exclusions>
+ </dependency>
+ <dependency>
+     <groupId>org.junit.platform</groupId>
+     <artifactId>junit-platform-launcher</artifactId>
+     <scope>test</scope>
+ </dependency>
+```
+<!-- ![](6-SpringBoot测试依赖.png) -->
 
 ## 测试流程
 
 ### @SpringBootTest
-![](6-@SpringBootTest.png)
+```
+@SpringBootTest(classes = UserApplication.class, webEnvironment =SpringBootTest.WebEnvironment.MOCK)
+```
+- MOCK
+加载WebApplicationContext并提供一个Mock的Servlet环境，内置的Servlet容器并没有真实的启动
+- RANDOM PORT
+加载EmbeddedWebApplicationContext并提供一个真实的Servlet环境，也就是说会启动内置容器，然后使用的是随机端口
+- DEFINED PORT
+加载EmbeddedWebApplicationContext并提供一个真实的Servlet环境，但使用配置的端口(默认8080)
+- NONE
+加载ApplicationContext但并不提供任何真实的Servlet环境
+<!-- ![](6-@SpringBootTest.png) -->
+
+#### 排除aop引入原生bean
+##### @SpringBootTest并排除AOP
+```
+@SpringBootTest(properties = {
+    "spring.aop.auto=false"  // 禁用AOP自动配置
+})
+```
+##### @Import直接导入Controller类
+```
+@WebMvcTest
+@Import(MyController.class)  // 直接导入Controller类，不经过代理
+public class MyControllerTest {
+    @Autowired
+    private MyController myController;
+    
+    // 测试方法...
+}
+```
+##### new创建实例并手动注入依赖
+若依赖其他bean需手动mock
+```
+public class MyControllerTest {
+    private MyController myController;
+    
+    @BeforeEach
+    public void setup() {
+        // 手动创建实例并注入依赖
+        myController = new MyController();
+        // 手动注入依赖（如果有）
+        // myController.setSomeService(mockSomeService);
+    }
+    
+    // 测试方法...
+}
+```
+##### @TestConfiguration提供非代理Bean
+```
+@SpringBootTest
+public class MyControllerTest {
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        @Primary
+        public MyController myController() {
+            return new MyController();  // 返回原始对象
+        }
+    }
+    
+    @Autowired
+    private MyController myController;
+    
+    // 测试方法...
+}
+```
+##### 针对特定测试禁用AOP
+```
+@SpringBootTest
+public class MyControllerTest {
+    @Autowired
+    private ApplicationContext context;
+    
+    private MyController myController;
+    
+    @BeforeEach
+    public void setup() {
+        // 获取原始对象而非代理
+        myController = context.getBean(MyController.class);
+        if(AopUtils.isAopProxy(myController)) {
+            myController = (MyController) ((Advised) myController).getTargetSource().getTarget();
+        }
+    }
+    
+    // 测试方法...
+}
+```
 
 ### @ExtendWith
-![](6-@ExtendWith.png)
-如果只想启用Spring环境进行简单测试，不想启用Spring Boot环境，可以配置扩展为：SpringExtension。
+@ExtendWith(SpringExtension)
+连接 JUnit 5 和 Spring 测试框架,单独使用测试非springboot应用
+不支持自动装配，手动加载配置文件，不启动servlet服务器
+<!-- ![](6-@ExtendWith.png) -->
+@SpringBootTest内置@ExtendWith
 
 ### 执行测试用例
-![](6-执行测试用例.png)
+3A原则
+Arrange:测试用例执行之前需要准备测试数据
+Act:通过不同的参数来调用接口，并拿到返回结果
+Assert:执行断言，判断执行结果是否符合预期
+```
+@ExtendWith(SpringExtension.class)
+public class UserTests {
+    private static final String USER NAME = "tianyalan";
+    @Test
+    public void testUsernameIsMoreThan5Chars()throws Exception {
+        //ArrangeUser user = new User("001", USER NAME, 39, new Date(),"china");
+        //Act + Assert
+        assertThat(user.getName()).isEqualTO(USER NAME);
+    }
+}
+```
+<!-- ![](6-执行测试用例.png) -->
 
 # 数据访问层测试
 ## @MybatisPlusTest注解
@@ -36,7 +158,14 @@ description: SpringBoot测试解决方案和实践
 没有使用@SpringBootTest注解，不验证spring容器能力
 前提：
 - mybatis-plus-boot-starter-test
-- 在Test/resource/application.yaml中配置配置数据源
+- 在Test/resource/application.yaml中配置配置测试数据源
+不依赖项目真实数据源，隔离真实数据源
+
+- Replace.AUTO_CONFIGURED (默认)自动用嵌入式DB替换
+- Replace.NONE 不替换，使用配置的真实DB
+Test/resource/application.yaml中配置数据源时使用此配置数据源
+- Replace.ANY
+替换所有数据源（包括嵌入式）
 
 ```
 @ExtendWith(SpringExtension.class)
@@ -88,7 +217,6 @@ public class CustomerStaffRepositoryTests {
     }
 }
 ```
-
 
 # 业务逻辑层测试
 
@@ -151,29 +279,32 @@ public class CustomerStaffServiceTests {
 # 测试Web API层
 - TestRestTemplate
 - @WebMvcTest注解
+和SpringbootTest注解冲突，不可同时使用
 - @AutoConfigureMockMvc
 
+
+
 ```
+//WebMvcTest注解
+@ExtendWith(SpringExtension.class)
+@WebMvcTest(UserController.class)
+public class UserControllerTestsWithMockMvc {
+    @Autowired
+    private MockMvc mvc
+    @MockBean
+    private UserService userService;
+    
+    @Test
+    public void testGetUserById()throws Exception {
+        String userId ="001";
+        User user = new User(userId, "tianyalan", 38, new Date(), "china");
+        given(this.userService,findUserById(userId)).willReturn(user);
+        this.mvc.perform(get("/users/" + userId).accept(MediaType.APPLICATION JSON)).andExpect(status().isOk());
+    }
+}
 
-import org.geekbang.projects.cs.entity.staff.CustomerStaff;
-import org.geekbang.projects.cs.service.ICustomerStaffService;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
+//SpringBootTest + AutoConfigureMockMvc
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc

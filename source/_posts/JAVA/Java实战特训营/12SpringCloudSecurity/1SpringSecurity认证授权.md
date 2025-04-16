@@ -161,3 +161,15 @@ byte [] encrypted = e.encrypt(valueToEncrypt.getBytes());
 byte [] decrypted = e.decrypt(encrypted);
 ```
 
+
+
+
+
+
+http.csrf().disable  关闭跨域请求伪造才可以通过idea.http测试接口
+
+
+# 思考题
+对于安全性而言，认证和授权分别解决了什么问题?如何解决?
+
+

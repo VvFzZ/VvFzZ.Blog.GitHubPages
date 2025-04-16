@@ -59,7 +59,7 @@ pushConsumer.subscribe("FilterMessageTopic", "TagA | TagC | TagD" );
 ```
 
 ## SQL过滤
-推才可用
+推模式才可用
 
 ```
 //生效配置

@@ -23,7 +23,7 @@ tags:
 - UserDetails 描述Spring Security中的用户
 - GrantedAuthority 定义用户所能执行的操作权限
 - UserDetailsService 定义对UserDetails的查询操作
-- UserDetailsManager 扩展UserDetailsService，添加新增和修改用户功能
+- UserDetailsManager 扩展UserDetailsService，添加新增和修改用户功能 
 
 UserDetailsService、UserDetailsManager接口读写分离设计，*读写分离设计有什么意义呢？*
 
@@ -66,8 +66,6 @@ return this.getAuthenticationManager().authenticate(authRequest);
 # Spring Security过滤器机制
 
 ![](集成Filter的认证相关类结构.png)
-
-
 
 ## 自定义过滤器
 ```

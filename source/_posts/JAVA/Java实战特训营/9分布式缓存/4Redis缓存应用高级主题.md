@@ -31,6 +31,7 @@ redis提升性能：1.提升并发量、响应效率 2.减轻数据库压力
     定时任务，查询数据库是否存在，存在则刷新过期时间
 2. 分布式锁
 分布式锁保证同一时刻只能一个请求重新加载热点数据到缓存中，其他线程等待从Redis中获取数据，不再直接查询数据库
+
 # 缓存雪崩
 大量key同时过期，redis宕机
 
@@ -61,21 +62,21 @@ redis提升性能：1.提升并发量、响应效率 2.减轻数据库压力
 限流、熔断、降级
 服务访问失败应对策略和Sentinel等开源框架
 
-
 ```
 public void setWithLogicalExpire(String key, Object value, Long time, TimeUnit timeUnit){
-    RedisData redisData =new RedisData();redisData.setData(value);
+    RedisData redisData =new RedisData();
+    redisData.setData(value);
     redisData.setExpireTime(LocalDateTime.now().plusSeconds(timeUnit.toSeconds(time)));
-    stringRedisTemplate,opsForValue(),set(key, JSON.toJsonString(redisData));
+    stringRedisTemplate.opsForValue(),set(key, JSON.toJsonString(redisData));
 }
 ```
 
 # 示例
 ```
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
+<dependency>
+    <groupId>com.google.guava</groupId>
+    <artifactId>guava</artifactId>
+</dependency>
 ```
 
 # 思考题
