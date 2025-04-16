@@ -4,6 +4,7 @@ date: 2024-06-21 22:51:42
 tags: mysql
 description:
 ---
+思考每句sql语句的执行逻辑，评估最好情况的资源消耗,避免低级错误
 
 # 简单介绍
 1. 开源
@@ -13,7 +14,7 @@ description:
 <!--more-->
 # 安装
 ## windows
-登录命令： mysql -hlocalhost -uroot -proot
+登录命令： mysql -hlocalhost -uroot -p
 显示数据库：show databases
 使用某一数据库：use db_name
 展示表：show tables
@@ -29,10 +30,15 @@ description:
 - SMALLINT 2 Bytes	(-32 768，32 767)	(0，65 535)
 - MEDIUMINT 3 Bytes	(-8 388 608，8 388 607)	(0，16 777 215)
 - INT/INTEGER 4 Bytes	(-2 147 483 648，2 147 483 647)	(0，4 294 967 295)
+int(10)表示显示长度
+CREATE TABLE t1 (c1 INT(4) ZEROFILL //存储10 显示0010
+);
 - BIGINT 8 Bytes
 - FLOAT	4 Bytes
 - DOUBLE	8 Bytes
 - DECIMAL
+- binary 定长 索引查询效率高，可能浪费空间
+- varbinary 变长，充分利用空间，查询效率低于binary，要计算长度信息
 ## 日期和时间类型
 类型	大小( bytes)	范围	格式	用途
 - DATE	3	1000-01-01/9999-12-31	YYYY-MM-DD	日期值
@@ -44,7 +50,19 @@ description:
 查询当前时间：`select now(),sysdate(),CURRENT_DATE();`
 ## 字符串类型
 - CHAR	0-255 bytes	定长字符串
+最大255个字符，定长性能高
 - VARCHAR	0-65535 bytes	变长字符串
+最大长度限制65535字节（MySQL中单行数据的总大小不能超过65535字节包括所有列的长度信息和实际数据）
+varchar(255)表示可存储255个字符
+实际可存储的字符数取决于字符集：
+latin1字符集（每个字符 1 字节），最大长度为65535字符。
+utf8mb4字符集（每个字符最多 4 字节），最大长度为16383字符（65,535/4）。
+
+如果长度小于等于255字节，1个字节存储长度信息，长度大于255字节，2个字节
+- NVARCHAR
+N代表Unicode字符
+nvarchar(20)可存储20个字符，可以存储20个字母或20个汉字（每个都占用两字节）
+
 - TINYBLOB	0-255 bytes	不超过 255 个字符的二进制字符串
 - TINYTEXT	0-255 bytes	短文本字符串
 - BLOB	0-65 535 bytes	二进制形式的长文本数据
@@ -65,14 +83,41 @@ GEOMETRY, POINT, LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, MULTIPOLYGON,
 - 数据和主键直接相关性
 
 # DDL
+- 新建库
+create database db1;
+
+show create table vvf.v_user\G
+- 新建表
+```
+CREATE TABLE player (
+  id int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
+  create_time datetime not null default CURRENT_TIMESTAMP COMMENT '创建时间'
+) ENGINE=InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
+```
+反引号避免和保留字段冲突
+utf8_general_ci大小写不敏感，utf8_bin敏感
+
 - 增加列 
 alter table table_name add column column_name first; // 增加一列，放在最前面
 alter table table_name add column column_name after id;//增加一列放在id列后
 - 删除列
-alter table table_name drop column_name;
+alter table table_name drop column_name; 要写日志所以慢
 - 修改列
 alter table table_name modify  column_name type; 只修改类型
 alter table table_name change old_column_name new_column_name type; 修改列明和类型
+ALTER TABLE player RENAME COLUMN age to player_age
+- 索引
+SHOW INDEX FROM table_name;
+创建索引
+CREATE INDEX index_name ON table_name(column_name);
+ALTER TABLE table_name ADD PRIMARY KEY (column_name);
+CREATE INDEX index_name ON table_name(column1, column2);
+CREATE UNIQUE INDEX index_name ON table_name(column_name);
+CREATE INDEX index_name ON table_name(column_name(10)); -- 只索引前10个字符
+删除索引
+DROP INDEX index_name ON table_name;
+ALTER TABLE table_name DROP PRIMARY KEY;
+
 
 - 复制表
     1. create table new_table as select * from old_table;
@@ -753,3 +798,55 @@ call proc1('vvf1')
 ```
 drop procedure proc1;
 ```
+
+# 一些问题
+## 查询语句执行流程，执行顺序
+FROM 子句组装数据
+join on （小表驱动，join前驱动表加载时优先根据where条件使用索引过滤，被驱动表在join中使用where条件过滤）
+WHERE 子句进行条件筛选；
+GROUP BY 分组 ；
+使用聚集函数进行计算；
+HAVING 筛选分组；
+计算所有的表达式；
+SELECT 的字段；
+ORDER BY 排序；
+LIMIT 筛选。
+
+##  EXISTS IN怎么选择
+小表驱动原则
+exists是外表驱动
+in是内标驱动
+
+# 内存相关
+change buffer DML操作时 将操作记录到换成，等到数据页写入内存时再应用
+redo log
+undo log
+
+# DELIMITER
+mysql默认使用;作为结束符；在控制台执行多行语句时使用
+临时定义新的 DELIMITER，新的结束符可以用（//）或者（$$）
+
+```
+DELIMITER //
+CREATE PROCEDURE `add_num`(IN n INT)
+BEGIN
+       DECLARE i INT;
+       DECLARE sum INT;
+       
+       SET i = 1;
+       SET sum = 0;
+       WHILE i <= n DO
+              SET sum = sum + i;
+              SET i = i +1;
+       END WHILE;
+       SELECT sum;
+END //
+DELIMITER ;
+```
+
+# 相关命令
+show engines; 查看引擎
+
+
+
+
