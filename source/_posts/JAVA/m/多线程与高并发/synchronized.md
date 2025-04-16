@@ -12,7 +12,7 @@ markword:不同虚拟机实现不同，hospot是对象头的两位（不同组�
 锁升级
 # 锁特性
 synchronize（this）
-synchornize(T.Class) (静态方法)
+synchronize(T.Class) (静态方法)
 # 线程的基本方法
 sleep 线程暂停执行，到时自动唤醒，进入就绪态
 yield 将线程由执行态设置为就绪态，cpu会从众多的就绪态（可执行态）里选择
@@ -585,6 +585,7 @@ public class TestInterrupt {
  - sleep、wait场景下可以结束
  - 精确结束：业务线程和触发结束的线程配合
 # AQS(CLH)
+基础框架，广泛应用于实现锁和其他同步器（如ReentrantLock、CountDownLatch、Semaphore等）
 ![](AQS.png)
 两个要点：state记录锁状态，CAS操作线程链表（等待队列）
 
@@ -599,7 +600,7 @@ volatile修饰 保证线程可见
 向队列添加时使用CAS，
 为什么是双向链表？需要考虑前一个节点的状态，若前一个节点持有锁，则等待，若已释放锁，则获取锁。
 为什么添加尾节点使用CAS而不使用锁？AQS核心，CAS操作tail 、head ；替代锁整个链表
-加入队列时，如果前一个结点时头结点，才尝试获得锁。若获取失败则阻塞，等待唤醒。
+加入队列时，如果前一个结点是头结点，才尝试获得锁。若获取失败则阻塞，等待唤醒。
 ![](ReentranLock.tryLock.png)
 公平：先线程进入等待队列；
 非公平：新线程尝试抢锁，抢不到进入队列
@@ -801,6 +802,8 @@ ThreadPoolExecutor executor = new ThreadPoolExecutor(
 并行计算（parallel）
 #### newScheduledThreadPool
 适用场景：定时任务
+scheduleAtFixedRate以固定的频率执行，period（周期）指的是两次成功执行之间的时间。上一个任务开始的时间计时，一个period后，检测上一个任务是否执行完毕，如果上一个任务执行完毕，则当前任务立即执行，如果上一个任务没有执行完毕，则需要等上一个任务执行完毕后立即执行。
+scheduleWithFixedDelay以固定的延时执行，delay（延时）指的是一次执行终止和下一次执行开始之间的延迟。
 
 ### ThreadPoolExecutor源码
 #### 常用变量解释
@@ -1004,7 +1007,6 @@ class MyContainer {
 ## 为什么说AQS是CAS+volatile
 写一个固定容量的同步容器，有put和get方法，以及getCount方法，能支持两个生产者线程以及10个消费者线程
 
-## 
 
 
 

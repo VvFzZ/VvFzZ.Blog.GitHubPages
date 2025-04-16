@@ -941,3 +941,5 @@ ApplicationFailedEvent
 定义在spring-boot.jar,spring-boot-autoconfigure.jar 的/META-INF/spring.factories文件中
 
 一个listner可支持多种事件类型
+# 其他
+parent module设置<packaging>pom</packaging>
