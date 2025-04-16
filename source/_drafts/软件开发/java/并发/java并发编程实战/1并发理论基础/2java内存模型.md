@@ -14,16 +14,17 @@ final关键字：初衷是告诉编译器，此生而变量不变，可随意优
 
 ## Happens-Before
 前面一个操作的结果对后续操作是可见的，不是说执行先后顺序。
-约束编译器的优化行为，允许编译器优化，但是要求优化后遵守 Happens-Before规则
+
+约束编译器的优化行为，允许编译器优化，但是要求优化后遵守Happens-Before规则
 
 ### Happens-Before六项规则
 1. 程序的顺序性规则
-同一个线程中，按照程序顺序，前面的操作 Happens-Before 于后续的任意操作。
+同一个线程中，按照程序顺序，前面的操作Happens-Before于后续的任意操作。
 2. volatile 变量规则
 volatile变量的写操作Happens-Before于后续对这个volatile变量的读操作。
 volatile变量的写操作相对于后续对这个volatile变量的读操作可见，这怎么看都是禁用缓存的意思啊。关联规则3
 3. 传递性
-A Happens-Before B，且 B Happens-Before C，那么 A Happens-Before C。
+A Happens-Before B，且B Happens-Before C，那么A Happens-Before C。
 ```
 class VolatileExample {
   int x = 0;
